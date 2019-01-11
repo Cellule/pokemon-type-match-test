@@ -18,7 +18,13 @@ import DocumentTile from "react-document-title";
 import gen1 from "./charts/gen1";
 import gen2to5 from "./charts/gen2to5";
 import gen6 from "./charts/gen6";
-import { Types, TypeChart, Effective } from "./types";
+import {
+  TypeImagesUrl,
+  Types,
+  TypeChart,
+  Effective
+} from "./types";
+import vsUrl from "./img/Versus_sign.png";
 
 interface IState {
   gen: TypeChart;
@@ -88,7 +94,13 @@ class App extends Component<any, IState> {
             <Row>
               <Col sm={12} md={4}>
                 <Row>
-                  {this.state.dual}
+                  <img src={TypeImagesUrl[this.state.offense]} alt={`Offense ${Types[this.state.offense]}`}/>
+                  <img src={vsUrl} alt="Versus"/>
+                  <img src={TypeImagesUrl[this.state.main]} alt={`Main ${Types[this.state.main]}`}/>
+                  {!!this.state.dual
+                    ? <img src={TypeImagesUrl[this.state.dual]} alt={`Dual ${Types[this.state.dual]}`}/>
+                    : null
+                  }
                 </Row>
                 <Row>
                   <Button key={Effective.Not} {...typeSelectButtonProps}>{Effective.Not}x</Button>
