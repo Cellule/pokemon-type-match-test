@@ -11,7 +11,6 @@ import {
   ListGroup,
   ListGroupItem,
   Button,
-  ButtonProps,
 } from "react-bootstrap"
 import DocumentTile from "react-document-title";
 
@@ -25,13 +24,24 @@ import {
   Effective
 } from "./types";
 import vsUrl from "./img/Versus_sign.png";
+import Icon from "./Icon";
 
-interface IState {
-  gen: TypeChart;
+interface Matchup {
   offense: Types,
   main: Types,
   dual: null | Types,
-  expectedStrength: Effective
+  answer: Effective,
+}
+
+interface HistoryMatch {
+  matchup: Matchup;
+  answer: Effective;
+}
+
+interface IState {
+  gen: TypeChart;
+  matchup: Matchup;
+  history: HistoryMatch[];
 }
 
 const generations: {[gen: string]: TypeChart} = {
@@ -43,18 +53,19 @@ const generations: {[gen: string]: TypeChart} = {
 function roll(max: number, min = 0) {
   return Math.floor((Math.random() * (max - min)) + min);
 }
-
+const historySize = 10;
 class App extends Component<any, IState> {
   constructor(props: any) {
     super(props);
 
     this.state = {
       gen: gen6,
-      ...this.chooseMatchup(gen6)
+      matchup: this.chooseMatchup(gen6),
+      history: [],
     };
   }
 
-  private chooseMatchup(gen: TypeChart) {
+  private chooseMatchup(gen: TypeChart): Matchup {
     const {types, count} = gen;
     const offense = roll(count) as Types;
     const main = roll(count) as Types;
@@ -72,57 +83,103 @@ class App extends Component<any, IState> {
       offense,
       main,
       dual,
-      expectedStrength
+      answer: expectedStrength
     }
   }
 
+  private onEffectivenessSelection(answer: Effective) {
+    const {gen, matchup, history} = this.state;
+    history.unshift({matchup, answer});
+    const newMatchup = this.chooseMatchup(gen);
+    this.setState({history, matchup: newMatchup});
+  }
+
   render() {
-    const typeSelectButtonProps: ButtonProps = {
-      bsSize: "lg",
-    }
+    const makeSelectButton = (effective: Effective) => {
+      const isEnabled = ((effective !== Effective.DualSuper && effective !== Effective.DualWeak) || !!this.state.matchup.dual);
+      let txt = effective.toString();
+      if (txt.startsWith("0.")) {
+        txt = txt.replace("0.", ".");
+      }
+      return (
+        <Button
+          key={effective}
+          bsSize="lg"
+          onClick={this.onEffectivenessSelection.bind(this, effective)}
+          disabled={!isEnabled}
+          className="answer-button"
+        >
+          {txt}
+        </Button>
+      );
+    };
     return (
       <div className="App">
         <DocumentTile title="Pokemon Type Match Test">
           <Grid>
             <Row>
-              <Col sm={12}>
+              <Col xs={12}>
                 <PageHeader>
                   Pokemon Type Match Test
                 </PageHeader>
               </Col>
             </Row>
             <Row>
-              <Col sm={12} md={4}>
+              <Col xs={12} md={6}>
                 <Row>
-                  <img src={TypeImagesUrl[this.state.offense]} alt={`Offense ${Types[this.state.offense]}`}/>
-                  <img src={vsUrl} alt="Versus"/>
-                  <img src={TypeImagesUrl[this.state.main]} alt={`Main ${Types[this.state.main]}`}/>
-                  {!!this.state.dual
-                    ? <img src={TypeImagesUrl[this.state.dual]} alt={`Dual ${Types[this.state.dual]}`}/>
-                    : null
-                  }
+                  <Col xsOffset={2}>
+                    <img src={TypeImagesUrl[this.state.matchup.offense]} alt={`Offense ${Types[this.state.matchup.offense]}`}/>
+                    <img src={vsUrl} alt="Versus"/>
+                    <img src={TypeImagesUrl[this.state.matchup.main]} alt={`Main ${Types[this.state.matchup.main]}`}/>
+                    {!!this.state.matchup.dual
+                      ? <img src={TypeImagesUrl[this.state.matchup.dual]} alt={`Dual ${Types[this.state.matchup.dual]}`}/>
+                      : null
+                    }
+                  </Col>
                 </Row>
-                <Row>
-                  <Button key={Effective.Not} {...typeSelectButtonProps}>{Effective.Not}x</Button>
-                  {!!this.state.dual
-                    ? <Button key={Effective.DualWeak} {...typeSelectButtonProps}>{Effective.DualWeak}x</Button>
-                    : null
-                  }
-                  <Button key={Effective.Weak} {...typeSelectButtonProps}>{Effective.Weak}x</Button>
-                  <Button key={Effective.Normal} {...typeSelectButtonProps}>{Effective.Normal}x</Button>
-                  <Button key={Effective.Super} {...typeSelectButtonProps}>{Effective.Super}x</Button>
-                  {!!this.state.dual
-                    ? <Button key={Effective.DualSuper} {...typeSelectButtonProps}>{Effective.DualSuper}x</Button>
-                    : null
-                  }
+                <Row className="answer-button-row">
+                  <Col xs={2} smOffset={1} sm={1} mdOffset={0} md={2}>
+                    {makeSelectButton(Effective.Not)}
+                  </Col>
+                  <Col xs={2} sm={1} md={2}>
+                    {makeSelectButton(Effective.DualWeak)}
+                  </Col>
+                  <Col xs={2} sm={1} md={2}>
+                    {makeSelectButton(Effective.Weak)}
+                  </Col>
+                  <Col xs={2} sm={1} md={2}>
+                    {makeSelectButton(Effective.Normal)}
+                  </Col>
+                  <Col xs={2} sm={1} md={2}>
+                    {makeSelectButton(Effective.Super)}
+                  </Col>
+                  <Col xs={2} sm={1} md={2}>
+                    {makeSelectButton(Effective.DualSuper)}
+                  </Col>
                 </Row>
               </Col>
-              <Col sm={12} md={3}>
+              <Col xs={12} md={4}>
                 <Panel>
                   <Panel.Heading>History</Panel.Heading>
                   <Panel.Body>
-                    <ListGroup>
-                      <ListGroupItem>last match</ListGroupItem>
+                    <ListGroup className="history-list">
+                      {this.state.history.slice(0, historySize).map((history, i) => {
+                        const correct = history.answer === history.matchup.answer;
+                        return <ListGroupItem
+                          key={this.state.history.length - i}
+                          className={`history-list-item history-list-item-${correct ? "correct" : "failed"}`}
+                        >
+                          <Icon library="fa" glyph={correct ? "check" : "times"} style={{color: correct ? "green" : "red"}}/>
+                          <img src={TypeImagesUrl[history.matchup.offense]} className="type-img" alt={`Offense ${Types[history.matchup.offense]}`}/>
+                          <img src={vsUrl} className="vs-img" alt="Versus"/>
+                          <img src={TypeImagesUrl[history.matchup.main]} className="type-img" alt={`Main ${Types[history.matchup.main]}`}/>
+                          {!!history.matchup.dual
+                            ? <img src={TypeImagesUrl[history.matchup.dual]} className="type-img" alt={`Dual ${Types[history.matchup.dual]}`}/>
+                            : null
+                          }
+                          <span>:{history.matchup.answer}x</span>
+                        </ListGroupItem>
+                      })}
                     </ListGroup>
                   </Panel.Body>
                 </Panel>

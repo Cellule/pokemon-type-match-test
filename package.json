@@ -13,6 +13,7 @@
     "bootstrap": "^3.0.0",
     "react": "^16.7.0",
     "react-bootstrap": "^0.32.4",
+    "react-classset": "0.0.2",
     "react-document-title": "^2.0.3",
     "react-dom": "^16.7.0",
     "react-scripts": "2.1.3",

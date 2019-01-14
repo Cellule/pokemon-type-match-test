@@ -1,0 +1,41 @@
+
+.type-img {
+  height: 75px;
+}
+
+.vs-img {
+  height: 25px;
+}
+
+.history-list-item > .type-img {
+  height: 50px;
+  width: 50px;
+}
+
+.history-list-item > .vs-img {
+  height: 15px;
+  width: 15px;
+}
+
+.history-list-item {
+  border: 2px solid;
+}
+
+.history-list-item-correct {
+  border-color: green;
+}
+
+.history-list-item-failed {
+  border-color: red;
+}
+
+.answer-button-row {
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+
+.answer-button {
+  width: 50px;
+  height: 50px;
+  padding: 0px 0px;
+}
